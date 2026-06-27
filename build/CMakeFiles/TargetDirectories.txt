@@ -1,0 +1,7 @@
+/home/muhammad-suleman/Desktop/NetwokThreatEngine/build/CMakeFiles/packet_analyzer.dir
+/home/muhammad-suleman/Desktop/NetwokThreatEngine/build/CMakeFiles/edit_cache.dir
+/home/muhammad-suleman/Desktop/NetwokThreatEngine/build/CMakeFiles/rebuild_cache.dir
+/home/muhammad-suleman/Desktop/NetwokThreatEngine/build/CMakeFiles/list_install_components.dir
+/home/muhammad-suleman/Desktop/NetwokThreatEngine/build/CMakeFiles/install.dir
+/home/muhammad-suleman/Desktop/NetwokThreatEngine/build/CMakeFiles/install/local.dir
+/home/muhammad-suleman/Desktop/NetwokThreatEngine/build/CMakeFiles/install/strip.dir

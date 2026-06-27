@@ -1,6 +1,6 @@
 #pragma once
-#ifndef NETWORK_THREAT_ENGINE_PACKET_RING_BUFFER_HPP
-#define NETWORK_THREAT_ENGINE_PACKET_RING_BUFFER_HPP
+#ifndef PACKET_RING_BUFFER_HPP
+#define PACKET_RING_BUFFER_HPP
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
@@ -9,8 +9,6 @@
 #include <mutex>
 #include <queue>
 #include <vector>
-
-extern PacketRingBuffer g_ring_buffer;
 
 struct CapturedPacket
 {
@@ -21,14 +19,14 @@ struct CapturedPacket
     // Original wire length of the frame before any kernel-level truncation.
     uint32_t original_length{0};
     /*Kernel-assigned capture timestamp.  The pcap_pkthdr supplies tv_sec and tv_usec; we merge them into a single 64-bit microsecond epoch value here to make Consumer logging arithmetic straightforward.*/
-    int64_t timestamp_us{0};
+    int64_t timestamp{0};
     // Constructors
     CapturedPacket() = default;
     CapturedPacket(const uint8_t *raw_data,
                    uint32_t cap_len,
                    uint32_t orig_len,
                    int64_t ts_us)
-        : data(raw_data, raw_data + cap_len), captured_length(cap_len), original_length(orig_len), timestamp_us(ts_us)
+        : data(raw_data, raw_data + cap_len), captured_length(cap_len), original_length(orig_len), timestamp(ts_us)
     {
     }
     // Move semantics transfer ownership of the heap-allocated data vector without copying.
@@ -144,4 +142,5 @@ public:
         return (static_cast<double>(dropped) / static_cast<double>(pushed)) * 100.0;
     }
 };
+extern PacketRingBuffer g_ring_buffer;
 #endif // NETWORK_THREAT_ENGINE_PACKET_RING_BUFFER_HPP
