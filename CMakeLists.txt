@@ -44,7 +44,7 @@ find_package(Threads REQUIRED)
 
 # Executable Target
 add_executable(packet_analyzer
-    src/main.cpp
+    src/PacketRingBuffer.cpp
 )
 
 # Include Directories
