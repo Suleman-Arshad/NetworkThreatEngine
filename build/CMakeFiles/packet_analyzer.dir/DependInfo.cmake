@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/muhammad-suleman/Desktop/NetwokThreatEngine/src/main.cpp" "CMakeFiles/packet_analyzer.dir/src/main.cpp.o" "gcc" "CMakeFiles/packet_analyzer.dir/src/main.cpp.o.d"
+  "/home/muhammad-suleman/Desktop/NetwokThreatEngine/src/PacketRingBuffer.cpp" "CMakeFiles/packet_analyzer.dir/src/PacketRingBuffer.cpp.o" "gcc" "CMakeFiles/packet_analyzer.dir/src/PacketRingBuffer.cpp.o.d"
   "" "packet_analyzer" "gcc" "CMakeFiles/packet_analyzer.dir/link.d"
   )
 

@@ -174,29 +174,29 @@ packet_analyzer/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/packet_analyzer.dir/build.make CMakeFiles/packet_analyzer.dir/build
 .PHONY : packet_analyzer/fast
 
-src/main.o: src/main.cpp.o
-.PHONY : src/main.o
+src/PacketRingBuffer.o: src/PacketRingBuffer.cpp.o
+.PHONY : src/PacketRingBuffer.o
 
 # target to build an object file
-src/main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/packet_analyzer.dir/build.make CMakeFiles/packet_analyzer.dir/src/main.cpp.o
-.PHONY : src/main.cpp.o
+src/PacketRingBuffer.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/packet_analyzer.dir/build.make CMakeFiles/packet_analyzer.dir/src/PacketRingBuffer.cpp.o
+.PHONY : src/PacketRingBuffer.cpp.o
 
-src/main.i: src/main.cpp.i
-.PHONY : src/main.i
+src/PacketRingBuffer.i: src/PacketRingBuffer.cpp.i
+.PHONY : src/PacketRingBuffer.i
 
 # target to preprocess a source file
-src/main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/packet_analyzer.dir/build.make CMakeFiles/packet_analyzer.dir/src/main.cpp.i
-.PHONY : src/main.cpp.i
+src/PacketRingBuffer.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/packet_analyzer.dir/build.make CMakeFiles/packet_analyzer.dir/src/PacketRingBuffer.cpp.i
+.PHONY : src/PacketRingBuffer.cpp.i
 
-src/main.s: src/main.cpp.s
-.PHONY : src/main.s
+src/PacketRingBuffer.s: src/PacketRingBuffer.cpp.s
+.PHONY : src/PacketRingBuffer.s
 
 # target to generate assembly for a file
-src/main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/packet_analyzer.dir/build.make CMakeFiles/packet_analyzer.dir/src/main.cpp.s
-.PHONY : src/main.cpp.s
+src/PacketRingBuffer.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/packet_analyzer.dir/build.make CMakeFiles/packet_analyzer.dir/src/PacketRingBuffer.cpp.s
+.PHONY : src/PacketRingBuffer.cpp.s
 
 # Help Target
 help:
@@ -211,9 +211,9 @@ help:
 	@echo "... list_install_components"
 	@echo "... rebuild_cache"
 	@echo "... packet_analyzer"
-	@echo "... src/main.o"
-	@echo "... src/main.i"
-	@echo "... src/main.s"
+	@echo "... src/PacketRingBuffer.o"
+	@echo "... src/PacketRingBuffer.i"
+	@echo "... src/PacketRingBuffer.s"
 .PHONY : help
 
 
