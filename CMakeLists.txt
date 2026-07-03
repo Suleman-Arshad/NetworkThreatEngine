@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 
 project(NetworkThreatEngine
-    VERSION 1.0
+    VERSION 2.0
     DESCRIPTION "Real-Time Network Intrusion Detection System"
     LANGUAGES CXX)
 
