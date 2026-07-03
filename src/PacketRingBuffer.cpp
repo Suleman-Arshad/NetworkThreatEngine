@@ -1,4 +1,5 @@
 #include "PacketRingBuffer.hpp"
+#include "ProtocolDissector.hpp"
 #include <arpa/inet.h>
 #include <csignal>
 #include <cstdio>
@@ -12,7 +13,9 @@
 #include <thread>
 // libpcap — packet capture library
 #include <pcap.h>
+
 using namespace std;
+
 #ifndef NTE_VERSION_MAJOR
 #define NTE_VERSION_MAJOR 1
 #endif
@@ -22,8 +25,10 @@ using namespace std;
 #ifndef NTE_VERSION_PATCH
 #define NTE_VERSION_PATCH 0
 #endif
+
 PacketRingBuffer g_ring_buffer;
 static pcap_t *g_pcap_handle = nullptr;
+
 namespace config
 {
     constexpr int SNAPLEN = 65535;
@@ -33,6 +38,7 @@ namespace config
     constexpr int PCAP_LOOP_INFINITE = -1;
     constexpr uint64_t STATS_INTERVAL = 500;
 }
+
 static void signal_handler(int signal_number)
 {
     const char *msg = "\n[SIGNAL] Shutdown initiated — draining pipeline...\n";
@@ -45,7 +51,8 @@ static void signal_handler(int signal_number)
     g_ring_buffer.shutdown();
     (void)signal_number; // Suppress unused variable warning
 }
-static std::string format_timestamp(int64_t ts_us)
+
+[[maybe_unused]] static std::string format_timestamp(int64_t ts_us)
 {
     // Split into whole seconds and microsecond remainder
     const time_t seconds = static_cast<time_t>(ts_us / 1'000'000LL);
@@ -61,21 +68,26 @@ static std::string format_timestamp(int64_t ts_us)
     oss << buf << '.' << std::setw(6) << std::setfill('0') << micros;
     return oss.str();
 }
+
 static void consumer_thread_func()
 {
     uint64_t packet_index = 0;
 
-    // Print a fixed-width column header once at thread start
+    // Table ki formatting aur separators ko IPv6 ke mutabik 146 characters par align kar diya hai
     std::cout
         << "\n"
         << std::left
-        << std::setw(10) << "INDEX"
+        << std::setw(8) << "INDEX"
+        << std::setw(40) << "SRC_IP" // 18 se badha kar 40 kar diya
+        << std::setw(40) << "DST_IP" // 18 se badha kar 40 kar diya
+        << std::setw(8) << "SPORT"
+        << std::setw(8) << "DPORT"
+        << std::setw(8) << "PROTO"
+        << std::setw(14) << "TCP_FLAGS"
         << std::setw(10) << "CAP(B)"
-        << std::setw(10) << "WIRE(B)"
-        << std::setw(32) << "TIMESTAMP"
         << std::setw(10) << "Q_DEPTH"
         << "\n"
-        << std::string(72, '-')
+        << std::string(146, '-') // Line length 102 se badha kar 146 kar di
         << "\n";
     std::cout.flush();
 
@@ -85,25 +97,78 @@ static void consumer_thread_func()
     {
         ++packet_index;
 
-        const std::string ts_str = format_timestamp(pkt.timestamp);
         const std::size_t q_depth = g_ring_buffer.size();
 
-        // Console log line
+        // Hand the raw captured bytes off to the Protocol Dissection Engine.
+        DissectionResult diss = dissect_packet(pkt.data.data(), pkt.captured_length);
+
+        // Resolve a short protocol label for the fixed-width column.
+        std::string proto_label = "OTHER";
+
+        if (diss.l4_protocol == L4Protocol::TCP)
+        {
+            proto_label = "TCP";
+        }
+        else if (diss.l4_protocol == L4Protocol::UDP)
+        {
+            proto_label = "UDP";
+        }
+        else if (diss.l4_protocol == L4Protocol::ICMP)
+        {
+            proto_label = "ICMP";
+        }
+        else if (diss.l3_protocol == L3Protocol::ARP)
+        {
+            proto_label = "ARP";
+        }
+
+        // Only show flags for TCP; leave the column blank otherwise.
+        const std::string flags_str =
+            (diss.l4_protocol == L4Protocol::TCP) ? format_tcp_flags(diss.tcp_flags) : "";
+
+        // Row values ko bhi perfectly 40 width ke sath align kar diya hai
         std::cout
             << std::left
-            << std::setw(10) << packet_index
+            << std::setw(8) << packet_index
+            << std::setw(40) << (diss.valid ? diss.src_ip : std::string("-")) // 40 width for IPv6
+            << std::setw(40) << (diss.valid ? diss.dst_ip : std::string("-")) // 40 width for IPv6
+            << std::setw(8) << (diss.src_port != 0 ? std::to_string(diss.src_port) : "-")
+            << std::setw(8) << (diss.dst_port != 0 ? std::to_string(diss.dst_port) : "-")
+            << std::setw(8) << proto_label
+            << std::setw(14) << flags_str
             << std::setw(10) << pkt.captured_length
-            << std::setw(10) << pkt.original_length
-            << std::setw(32) << ts_str
             << std::setw(10) << q_depth
             << "\n";
 
-        // Flush every STATS_INTERVAL packets to keep the terminal responsive
-        // without paying a syscall on every single line.
+        if (diss.dns.has_value())
+        {
+            std::cout
+                << "         |- DNS  query=" << diss.dns->query_name
+                << "  qtype=" << diss.dns->query_type
+                << "\n";
+        }
+
+        if (diss.http.has_value())
+        {
+            std::cout
+                << "         |- HTTP " << diss.http->method
+                << " host=" << diss.http->host
+                << " uri=" << diss.http->uri
+                << "\n";
+        }
+
+        if (diss.tls.has_value())
+        {
+            std::cout
+                << "         |- TLS  sni=" << diss.tls->sni
+                << "\n";
+        }
+
+        // Stats section ke lines ko bhi 146 characters par adjust kar diya hai
         if (packet_index % config::STATS_INTERVAL == 0)
         {
             std::cout
-                << std::string(72, '-')
+                << std::string(146, '-')
                 << "\n"
                 << "[STATS] Processed=" << packet_index
                 << "  |  Pushed=" << g_ring_buffer.pushed_count()
@@ -112,43 +177,40 @@ static void consumer_thread_func()
                 << g_ring_buffer.drop_rate_percent() << "%"
                 << "  |  Q_Depth=" << q_depth
                 << "\n"
-                << std::string(72, '-')
+                << std::string(146, '-')
                 << "\n";
 
             std::cout.flush();
         }
     }
 
-    // pop() returned false — shutdown() was called and queue is empty
     std::cout
         << "\n[CONSUMER] Queue drained.  Total processed: "
         << packet_index
         << "\n";
     std::cout.flush();
 }
+
 static void packet_callback(u_char *user,
                             const struct pcap_pkthdr *pkthdr,
                             const u_char *packet)
 {
-    (void)user; // unused in Week 1
+    (void)user;
 
     // Convert pcap timeval to 64-bit microsecond epoch
     const int64_t ts_us =
         static_cast<int64_t>(pkthdr->ts.tv_sec) * 1'000'000LL +
         static_cast<int64_t>(pkthdr->ts.tv_usec);
 
-    // Construct the packet struct directly from pcap's buffer — this performs
-    // the single necessary memcpy out of the kernel ring buffer page.
     CapturedPacket captured(
         reinterpret_cast<const uint8_t *>(packet),
         pkthdr->caplen,
         pkthdr->len,
         ts_us);
 
-    // Transfer ownership into the ring buffer via move; captured is empty after
-    // this call — no data is duplicated.
     g_ring_buffer.push(std::move(captured));
 }
+
 static std::string discover_capture_device()
 {
     char errbuf[PCAP_ERRBUF_SIZE];
@@ -197,7 +259,6 @@ static std::string discover_capture_device()
             first_device = dev->name;
         }
 
-        // Prefer the first non-loopback, up, running interface
         if (selected_device.empty() && is_up && is_running && !is_loopback)
         {
             selected_device = dev->name;
@@ -206,8 +267,6 @@ static std::string discover_capture_device()
 
     pcap_freealldevs(alldevs);
 
-    // Fall back to the first listed device (e.g., loopback on a minimal VM)
-    // if no ideal interface was found.
     if (selected_device.empty())
     {
         selected_device = first_device;
@@ -223,11 +282,11 @@ static std::string discover_capture_device()
 
     return selected_device;
 }
+
 static pcap_t *initialise_pcap_handle(const std::string &device_name)
 {
     char errbuf[PCAP_ERRBUF_SIZE];
 
-    // Create the pcap session (does not open the socket yet)
     pcap_t *handle = pcap_create(device_name.c_str(), errbuf);
 
     if (handle == nullptr)
@@ -238,7 +297,6 @@ static pcap_t *initialise_pcap_handle(const std::string &device_name)
         std::exit(EXIT_FAILURE);
     }
 
-    // Configure snapshot length
     if (pcap_set_snaplen(handle, config::SNAPLEN) != 0)
     {
         std::cerr
@@ -248,7 +306,6 @@ static pcap_t *initialise_pcap_handle(const std::string &device_name)
         std::exit(EXIT_FAILURE);
     }
 
-    // Enable promiscuous mode
     if (pcap_set_promisc(handle, config::PROMISCUOUS) != 0)
     {
         std::cerr
@@ -258,18 +315,14 @@ static pcap_t *initialise_pcap_handle(const std::string &device_name)
         std::exit(EXIT_FAILURE);
     }
 
-    // Set the kernel ring buffer size
     if (pcap_set_buffer_size(handle, config::KERNEL_BUFFER_BYTES) != 0)
     {
-        // Non-fatal: the kernel may silently cap the buffer at a system maximum.
-        // Log a warning but continue — the capture will still work.
         std::cerr
             << "[WARN]  pcap_set_buffer_size(" << config::KERNEL_BUFFER_BYTES
             << ") returned non-zero: " << pcap_geterr(handle)
             << " — the kernel may have applied its own limit.\n";
     }
 
-    // Set the read timeout
     if (pcap_set_timeout(handle, config::READ_TIMEOUT_MS) != 0)
     {
         std::cerr
@@ -279,12 +332,10 @@ static pcap_t *initialise_pcap_handle(const std::string &device_name)
         std::exit(EXIT_FAILURE);
     }
 
-    // Activate (opens the raw socket, applies all settings)
     const int activate_result = pcap_activate(handle);
 
     if (activate_result < 0)
     {
-        // Negative return is a hard error
         std::cerr
             << "[FATAL] pcap_activate() error "
             << activate_result << ": "
@@ -304,14 +355,12 @@ static pcap_t *initialise_pcap_handle(const std::string &device_name)
 
     if (activate_result > 0)
     {
-        // Positive return is a warning (e.g., PCAP_WARNING_PROMISC_NOTSUP)
         std::cerr
             << "[WARN]  pcap_activate() warning "
             << activate_result << ": "
             << pcap_statustostr(activate_result) << "\n";
     }
 
-    // Confirm the datalink type
     const int datalink = pcap_datalink(handle);
     std::cout
         << "[INFO]  Datalink type: "
@@ -321,12 +370,13 @@ static pcap_t *initialise_pcap_handle(const std::string &device_name)
 
     return handle;
 }
+
 int main(int argc, char *argv[])
 {
     std::cout << "\n";
     std::cout << "==============================================================\n";
-    std::cout << "               Network Threat Engine  v1.0.0\n";
-    std::cout << "            Real-Time Packet Capture Pipeline                 \n";
+    std::cout << "               Network Threat Engine  v2.0.0\n";
+    std::cout << "            Real-Time Multi-Layer Protocol Dissector          \n";
     std::cout << "==============================================================\n";
     std::cout << "\n";
     std::string device_name;
@@ -341,7 +391,6 @@ int main(int argc, char *argv[])
         device_name = discover_capture_device();
     }
 
-    // Initialise pcap handle with the selected device and configuration parameters
     std::cout
         << "[INFO]  Initialising pcap on '" << device_name << "'\n"
         << "[INFO]  Snaplen      : " << config::SNAPLEN << " bytes\n"
@@ -354,11 +403,10 @@ int main(int argc, char *argv[])
 
     std::cout << "[INFO]  pcap handle activated successfully.\n";
 
-    // Install signal handlers
     struct sigaction sa{};
     sa.sa_handler = signal_handler;
     sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART; // restart interrupted syscalls where possible
+    sa.sa_flags = SA_RESTART;
 
     if (sigaction(SIGINT, &sa, nullptr) != 0 ||
         sigaction(SIGTERM, &sa, nullptr) != 0)
@@ -368,7 +416,6 @@ int main(int argc, char *argv[])
         std::signal(SIGTERM, signal_handler);
     }
 
-    // Spawn Consumer Thread
     std::thread consumer_thread(consumer_thread_func);
     consumer_thread.detach();
 
@@ -386,11 +433,8 @@ int main(int argc, char *argv[])
         packet_callback,
         nullptr);
 
-    // Post-loop Shutdown
-
     if (loop_result == PCAP_ERROR_BREAK)
     {
-        // Normal: pcap_breakloop() was called by our signal handler
         std::cout << "\n[INFO]  pcap_loop() exited cleanly (breakloop signal).\n";
     }
     else if (loop_result == PCAP_ERROR)
@@ -402,7 +446,6 @@ int main(int argc, char *argv[])
     g_ring_buffer.shutdown();
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-    // pcap Statistics
     struct pcap_stat ps{};
 
     if (pcap_stats(g_pcap_handle, &ps) == 0)
@@ -414,7 +457,6 @@ int main(int argc, char *argv[])
             << "[STATS]  Packets dropped by interface      : " << ps.ps_ifdrop << "\n";
     }
 
-    // Ring Buffer Statistics
     std::cout
         << "\n[STATS] ----- ring buffer statistics -----\n"
         << "[STATS]  Total pushed   : " << g_ring_buffer.pushed_count() << "\n"
@@ -424,7 +466,6 @@ int main(int argc, char *argv[])
         << g_ring_buffer.drop_rate_percent() << "%\n"
         << "[STATS]  Queue at exit  : " << g_ring_buffer.size() << " packets\n";
 
-    // Cleanup
     pcap_close(g_pcap_handle);
     g_pcap_handle = nullptr;
 
