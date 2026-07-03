@@ -198,6 +198,30 @@ src/PacketRingBuffer.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/packet_analyzer.dir/build.make CMakeFiles/packet_analyzer.dir/src/PacketRingBuffer.cpp.s
 .PHONY : src/PacketRingBuffer.cpp.s
 
+src/ProtocolDissector.o: src/ProtocolDissector.cpp.o
+.PHONY : src/ProtocolDissector.o
+
+# target to build an object file
+src/ProtocolDissector.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/packet_analyzer.dir/build.make CMakeFiles/packet_analyzer.dir/src/ProtocolDissector.cpp.o
+.PHONY : src/ProtocolDissector.cpp.o
+
+src/ProtocolDissector.i: src/ProtocolDissector.cpp.i
+.PHONY : src/ProtocolDissector.i
+
+# target to preprocess a source file
+src/ProtocolDissector.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/packet_analyzer.dir/build.make CMakeFiles/packet_analyzer.dir/src/ProtocolDissector.cpp.i
+.PHONY : src/ProtocolDissector.cpp.i
+
+src/ProtocolDissector.s: src/ProtocolDissector.cpp.s
+.PHONY : src/ProtocolDissector.s
+
+# target to generate assembly for a file
+src/ProtocolDissector.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/packet_analyzer.dir/build.make CMakeFiles/packet_analyzer.dir/src/ProtocolDissector.cpp.s
+.PHONY : src/ProtocolDissector.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -214,6 +238,9 @@ help:
 	@echo "... src/PacketRingBuffer.o"
 	@echo "... src/PacketRingBuffer.i"
 	@echo "... src/PacketRingBuffer.s"
+	@echo "... src/ProtocolDissector.o"
+	@echo "... src/ProtocolDissector.i"
+	@echo "... src/ProtocolDissector.s"
 .PHONY : help
 
 

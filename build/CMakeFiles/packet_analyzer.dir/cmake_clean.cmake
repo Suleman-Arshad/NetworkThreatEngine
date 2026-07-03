@@ -2,6 +2,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/packet_analyzer.dir/link.d"
   "CMakeFiles/packet_analyzer.dir/src/PacketRingBuffer.cpp.o"
   "CMakeFiles/packet_analyzer.dir/src/PacketRingBuffer.cpp.o.d"
+  "CMakeFiles/packet_analyzer.dir/src/ProtocolDissector.cpp.o"
+  "CMakeFiles/packet_analyzer.dir/src/ProtocolDissector.cpp.o.d"
   "packet_analyzer"
   "packet_analyzer.pdb"
 )
