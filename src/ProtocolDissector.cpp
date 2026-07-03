@@ -3,7 +3,6 @@
 #include <cstring>
 #include <sstream>
 #include <iomanip>
-
 // Formatting Helpers
 std::string format_mac_address(const uint8_t mac[6])
 {
