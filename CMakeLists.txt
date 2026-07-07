@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 
 project(NetworkThreatEngine
-    VERSION 2.0
+    VERSION 1.0
     DESCRIPTION "Real-Time Network Intrusion Detection System"
     LANGUAGES CXX)
 
@@ -18,7 +18,7 @@ endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 
-# Locate Required Libraries
+# Locate Required Libraries (libpcap)
 find_library(PCAP_LIBRARY
     NAMES pcap
     PATHS /usr/lib /usr/local/lib /usr/lib/x86_64-linux-gnu
@@ -30,6 +30,7 @@ if(NOT PCAP_LIBRARY)
     )
 endif()
 message(STATUS "Found libpcap: ${PCAP_LIBRARY}")
+
 find_path(PCAP_INCLUDE_DIR
     NAMES pcap.h pcap/pcap.h
     PATHS /usr/include /usr/local/include
@@ -40,12 +41,22 @@ if(NOT PCAP_INCLUDE_DIR)
     )
 endif()
 message(STATUS "Found pcap.h: ${PCAP_INCLUDE_DIR}")
+
+# Find Threads and SQLite3 for Week 3
 find_package(Threads REQUIRED)
+find_package(SQLite3 REQUIRED) 
+
+if(NOT SQLite3_FOUND)
+    message(FATAL_ERROR "SQLite3 not found. Install it with: sudo apt install libsqlite3-dev")
+endif()
+message(STATUS "Found SQLite3 Include : ${SQLite3_INCLUDE_DIRS}")
+message(STATUS "Found SQLite3 Library : ${SQLite3_LIBRARIES}")
 
 # Executable Target
 add_executable(packet_analyzer
     src/main.cpp
     src/ProtocolDissector.cpp
+    #src/ThreatEngine.cpp
 )
 
 # Include Directories
@@ -53,21 +64,19 @@ target_include_directories(packet_analyzer
     PRIVATE
         ${CMAKE_SOURCE_DIR}/include
         ${PCAP_INCLUDE_DIR}
+        ${SQLite3_INCLUDE_DIRS}
 )
 
 # Compiler Flags
 target_compile_options(packet_analyzer
     PRIVATE
-        # Optimisation — full O3 for the hot capture and consumer path
         $<$<CONFIG:Release>:-O3>
         $<$<CONFIG:Release>:-march=native>
- 
-        # Debug build: no optimisation, full debug symbols, sanitisers
         $<$<CONFIG:Debug>:-O0>
         $<$<CONFIG:Debug>:-g3>
         $<$<CONFIG:Debug>:-fsanitize=address,undefined>
  
-        # Strict conformance and warning flags (all build types)
+        # Strict conformance and warning flags
         -Wall
         -Wextra
         -Wpedantic
@@ -80,21 +89,20 @@ target_compile_options(packet_analyzer
         -fstack-protector-strong
 )
 
-# Linker Flags
+# Linker Flags (Using direct variable ${SQLite3_LIBRARIES} for maximum compatibility)
 target_link_libraries(packet_analyzer
     PRIVATE
-        ${PCAP_LIBRARY}           # libpcap.so / libpcap.a
-        Threads::Threads          # -lpthread (resolves platform correctly)
+        ${PCAP_LIBRARY}          
+        Threads::Threads          
+        ${SQLite3_LIBRARIES}      
         $<$<CONFIG:Debug>:-fsanitize=address,undefined>
 )
 
 # Preprocessor Definitions
 target_compile_definitions(packet_analyzer
     PRIVATE
-        # Expose the full POSIX API surface (required for pthread scheduling calls)
         _POSIX_C_SOURCE=200809L
         _GNU_SOURCE
-        # Project version string available at runtime
         NTE_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
         NTE_VERSION_MINOR=${PROJECT_VERSION_MINOR}
         NTE_VERSION_PATCH=${PROJECT_VERSION_PATCH}
@@ -111,5 +119,6 @@ message(STATUS "  Target     : packet_analyzer")
 message(STATUS "  Standard   : C++17")
 message(STATUS "  Build type : ${CMAKE_BUILD_TYPE}")
 message(STATUS "  libpcap    : ${PCAP_LIBRARY}")
+message(STATUS "  SQLite3    : ${SQLite3_LIBRARIES}")
 message(STATUS "  pthreads   : ${CMAKE_THREAD_LIBS_INIT}")
 message(STATUS "=======================================")
