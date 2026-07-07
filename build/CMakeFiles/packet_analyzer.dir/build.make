@@ -113,6 +113,7 @@ packet_analyzer: CMakeFiles/packet_analyzer.dir/src/ProtocolDissector.cpp.o
 packet_analyzer: CMakeFiles/packet_analyzer.dir/build.make
 packet_analyzer: CMakeFiles/packet_analyzer.dir/compiler_depend.ts
 packet_analyzer: /usr/lib/x86_64-linux-gnu/libpcap.so
+packet_analyzer: /usr/lib/x86_64-linux-gnu/libsqlite3.so
 packet_analyzer: CMakeFiles/packet_analyzer.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/muhammad-suleman/Desktop/NetwokThreatEngine/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Linking CXX executable packet_analyzer"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/packet_analyzer.dir/link.txt --verbose=$(VERBOSE)

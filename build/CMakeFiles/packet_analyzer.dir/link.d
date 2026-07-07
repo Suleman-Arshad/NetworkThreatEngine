@@ -5,6 +5,7 @@ packet_analyzer: \
   CMakeFiles/packet_analyzer.dir/src/main.cpp.o \
   CMakeFiles/packet_analyzer.dir/src/ProtocolDissector.cpp.o \
   /usr/lib/x86_64-linux-gnu/libpcap.so \
+  /usr/lib/x86_64-linux-gnu/libsqlite3.so \
   /usr/lib/gcc/x86_64-linux-gnu/15/libstdc++.so \
   /usr/lib/gcc/x86_64-linux-gnu/15/../../../x86_64-linux-gnu/libm.so \
   /usr/lib/gcc/x86_64-linux-gnu/15/../../../x86_64-linux-gnu/libm.so \
@@ -50,6 +51,8 @@ CMakeFiles/packet_analyzer.dir/src/main.cpp.o:
 CMakeFiles/packet_analyzer.dir/src/ProtocolDissector.cpp.o:
 
 /usr/lib/x86_64-linux-gnu/libpcap.so:
+
+/usr/lib/x86_64-linux-gnu/libsqlite3.so:
 
 /usr/lib/gcc/x86_64-linux-gnu/15/libstdc++.so:
 

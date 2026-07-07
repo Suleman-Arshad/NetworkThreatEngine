@@ -25,6 +25,8 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/usr/share/cmake-4.2/Modules/Compiler/GNU.cmake"
   "/usr/share/cmake-4.2/Modules/FindPackageHandleStandardArgs.cmake"
   "/usr/share/cmake-4.2/Modules/FindPackageMessage.cmake"
+  "/usr/share/cmake-4.2/Modules/FindPkgConfig.cmake"
+  "/usr/share/cmake-4.2/Modules/FindSQLite3.cmake"
   "/usr/share/cmake-4.2/Modules/FindThreads.cmake"
   "/usr/share/cmake-4.2/Modules/Internal/CMakeCXXLinkerInformation.cmake"
   "/usr/share/cmake-4.2/Modules/Internal/CMakeCommonLinkerInformation.cmake"
