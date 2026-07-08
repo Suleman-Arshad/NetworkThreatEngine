@@ -9,6 +9,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/muhammad-suleman/Desktop/NetwokThreatEngine/src/ProtocolDissector.cpp" "CMakeFiles/packet_analyzer.dir/src/ProtocolDissector.cpp.o" "gcc" "CMakeFiles/packet_analyzer.dir/src/ProtocolDissector.cpp.o.d"
+  "/home/muhammad-suleman/Desktop/NetwokThreatEngine/src/ThreatEngine.cpp" "CMakeFiles/packet_analyzer.dir/src/ThreatEngine.cpp.o" "gcc" "CMakeFiles/packet_analyzer.dir/src/ThreatEngine.cpp.o.d"
   "/home/muhammad-suleman/Desktop/NetwokThreatEngine/src/main.cpp" "CMakeFiles/packet_analyzer.dir/src/main.cpp.o" "gcc" "CMakeFiles/packet_analyzer.dir/src/main.cpp.o.d"
   "" "packet_analyzer" "gcc" "CMakeFiles/packet_analyzer.dir/link.d"
   )

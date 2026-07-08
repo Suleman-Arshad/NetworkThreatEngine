@@ -4,6 +4,7 @@ packet_analyzer: \
   /usr/lib/gcc/x86_64-linux-gnu/15/crtbeginS.o \
   CMakeFiles/packet_analyzer.dir/src/main.cpp.o \
   CMakeFiles/packet_analyzer.dir/src/ProtocolDissector.cpp.o \
+  CMakeFiles/packet_analyzer.dir/src/ThreatEngine.cpp.o \
   /usr/lib/x86_64-linux-gnu/libpcap.so \
   /usr/lib/x86_64-linux-gnu/libsqlite3.so \
   /usr/lib/gcc/x86_64-linux-gnu/15/libstdc++.so \
@@ -49,6 +50,8 @@ packet_analyzer: \
 CMakeFiles/packet_analyzer.dir/src/main.cpp.o:
 
 CMakeFiles/packet_analyzer.dir/src/ProtocolDissector.cpp.o:
+
+CMakeFiles/packet_analyzer.dir/src/ThreatEngine.cpp.o:
 
 /usr/lib/x86_64-linux-gnu/libpcap.so:
 

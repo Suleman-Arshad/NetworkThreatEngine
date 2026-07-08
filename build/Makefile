@@ -198,6 +198,30 @@ src/ProtocolDissector.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/packet_analyzer.dir/build.make CMakeFiles/packet_analyzer.dir/src/ProtocolDissector.cpp.s
 .PHONY : src/ProtocolDissector.cpp.s
 
+src/ThreatEngine.o: src/ThreatEngine.cpp.o
+.PHONY : src/ThreatEngine.o
+
+# target to build an object file
+src/ThreatEngine.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/packet_analyzer.dir/build.make CMakeFiles/packet_analyzer.dir/src/ThreatEngine.cpp.o
+.PHONY : src/ThreatEngine.cpp.o
+
+src/ThreatEngine.i: src/ThreatEngine.cpp.i
+.PHONY : src/ThreatEngine.i
+
+# target to preprocess a source file
+src/ThreatEngine.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/packet_analyzer.dir/build.make CMakeFiles/packet_analyzer.dir/src/ThreatEngine.cpp.i
+.PHONY : src/ThreatEngine.cpp.i
+
+src/ThreatEngine.s: src/ThreatEngine.cpp.s
+.PHONY : src/ThreatEngine.s
+
+# target to generate assembly for a file
+src/ThreatEngine.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/packet_analyzer.dir/build.make CMakeFiles/packet_analyzer.dir/src/ThreatEngine.cpp.s
+.PHONY : src/ThreatEngine.cpp.s
+
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
 
@@ -238,6 +262,9 @@ help:
 	@echo "... src/ProtocolDissector.o"
 	@echo "... src/ProtocolDissector.i"
 	@echo "... src/ProtocolDissector.s"
+	@echo "... src/ThreatEngine.o"
+	@echo "... src/ThreatEngine.i"
+	@echo "... src/ThreatEngine.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
