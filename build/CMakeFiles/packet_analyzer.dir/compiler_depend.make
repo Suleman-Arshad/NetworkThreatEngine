@@ -610,6 +610,7 @@ packet_analyzer: /lib64/ld-linux-x86-64.so.2 \
   /usr/lib/x86_64-linux-gnu/libnl-3.so.200 \
   /usr/lib/x86_64-linux-gnu/libnl-route-3.so.200 \
   /usr/lib/x86_64-linux-gnu/libpcap.so \
+  /usr/lib/x86_64-linux-gnu/libsqlite3.so \
   /usr/lib/x86_64-linux-gnu/libsystemd.so.0 \
   CMakeFiles/packet_analyzer.dir/src/ProtocolDissector.cpp.o \
   CMakeFiles/packet_analyzer.dir/src/main.cpp.o
@@ -618,6 +619,8 @@ packet_analyzer: /lib64/ld-linux-x86-64.so.2 \
 CMakeFiles/packet_analyzer.dir/src/ProtocolDissector.cpp.o:
 
 /usr/lib/x86_64-linux-gnu/libsystemd.so.0:
+
+/usr/lib/x86_64-linux-gnu/libsqlite3.so:
 
 /usr/lib/x86_64-linux-gnu/libpcap.so:
 
