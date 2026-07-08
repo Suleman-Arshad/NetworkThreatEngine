@@ -56,7 +56,7 @@ message(STATUS "Found SQLite3 Library : ${SQLite3_LIBRARIES}")
 add_executable(packet_analyzer
     src/main.cpp
     src/ProtocolDissector.cpp
-    #src/ThreatEngine.cpp
+    src/ThreatEngine.cpp
 )
 
 # Include Directories
