@@ -1,5 +1,6 @@
 #include "PacketRingBuffer.hpp"
 #include "ProtocolDissector.hpp"
+#include "ThreatEngine.hpp"
 #include <arpa/inet.h>
 #include <csignal>
 #include <cstdio>
