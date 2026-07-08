@@ -28,6 +28,7 @@ using namespace std;
 #endif
 
 PacketRingBuffer g_ring_buffer;
+ThreatEngine g_threat_engine;
 static pcap_t *g_pcap_handle = nullptr;
 
 namespace config
@@ -73,14 +74,12 @@ static void signal_handler(int signal_number)
 static void consumer_thread_func()
 {
     uint64_t packet_index = 0;
-
-    // Table ki formatting aur separators ko IPv6 ke mutabik 146 characters par align kar diya hai
     std::cout
         << "\n"
         << std::left
         << std::setw(8) << "INDEX"
-        << std::setw(40) << "SRC_IP" // 18 se badha kar 40 kar diya
-        << std::setw(40) << "DST_IP" // 18 se badha kar 40 kar diya
+        << std::setw(40) << "SRC_IP"
+        << std::setw(40) << "DST_IP"
         << std::setw(8) << "SPORT"
         << std::setw(8) << "DPORT"
         << std::setw(8) << "PROTO"
@@ -88,7 +87,7 @@ static void consumer_thread_func()
         << std::setw(10) << "CAP(B)"
         << std::setw(10) << "Q_DEPTH"
         << "\n"
-        << std::string(146, '-') // Line length 102 se badha kar 146 kar di
+        << std::string(146, '-')
         << "\n";
     std::cout.flush();
 
@@ -102,6 +101,8 @@ static void consumer_thread_func()
 
         // Hand the raw captured bytes off to the Protocol Dissection Engine.
         DissectionResult diss = dissect_packet(pkt.data.data(), pkt.captured_length);
+
+        g_threat_engine.inspect_packet(diss);
 
         // Resolve a short protocol label for the fixed-width column.
         std::string proto_label = "OTHER";
@@ -131,8 +132,8 @@ static void consumer_thread_func()
         std::cout
             << std::left
             << std::setw(8) << packet_index
-            << std::setw(40) << (diss.valid ? diss.src_ip : std::string("-")) // 40 width for IPv6
-            << std::setw(40) << (diss.valid ? diss.dst_ip : std::string("-")) // 40 width for IPv6
+            << std::setw(40) << (diss.valid ? diss.src_ip : std::string("-"))
+            << std::setw(40) << (diss.valid ? diss.dst_ip : std::string("-"))
             << std::setw(8) << (diss.src_port != 0 ? std::to_string(diss.src_port) : "-")
             << std::setw(8) << (diss.dst_port != 0 ? std::to_string(diss.dst_port) : "-")
             << std::setw(8) << proto_label
@@ -462,7 +463,7 @@ int main(int argc, char *argv[])
         << "\n[STATS] ----- ring buffer statistics -----\n"
         << "[STATS]  Total pushed   : " << g_ring_buffer.pushed_count() << "\n"
         << "[STATS]  Total popped   : " << g_ring_buffer.popped_count() << "\n"
-        << "[STATS]  Total dropped  : " << g_ring_buffer.dropped_count() << "\n"
+        << "[STATS" << "]  Total dropped  : " << g_ring_buffer.dropped_count() << "\n"
         << "[STATS]  Drop rate      : " << std::fixed << std::setprecision(4)
         << g_ring_buffer.drop_rate_percent() << "%\n"
         << "[STATS]  Queue at exit  : " << g_ring_buffer.size() << " packets\n";
