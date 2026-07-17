@@ -104,7 +104,7 @@ namespace nte
             {
                 // Detect IPv4-mapped prefix: bytes 0-9 are 0, bytes 10-11 are 0xFF
                 bool is_v4 = true;
-                for (int i = 0; i < 10; ++i)
+                for (std::size_t i = 0; i < 10u; ++i)
                 {
                     if (a[i] != 0)
                     {

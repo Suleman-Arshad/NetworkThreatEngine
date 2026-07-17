@@ -359,57 +359,72 @@ namespace nte
             PerIpBruteForceState &state = brute_force_state_[info.src_ip];
             PortWindow &win = state.port_windows[info.dst_port];
 
+            if (win.count == 0)
+            {
+                win.window_start = now;
+            }
+
+            ++win.count;
+
             const double window_age =
                 std::chrono::duration<double>(now - win.window_start).count();
 
+            bool trigger_alert = false;
+            double current_rate = 0.0;
+
             if (window_age >= 1.0)
             {
-                // Evaluate completed window
-                const double rate =
-                    static_cast<double>(win.count) / window_age;
-
-                // Reset window
-                win.count = 1;
-                win.window_start = now;
-
-                if (rate >= config_.brute_force.rate_pps)
+                current_rate = static_cast<double>(win.count) / window_age;
+                if (current_rate >= config_.brute_force.rate_pps)
                 {
-                    if (is_suppressed(info.src_ip, AttackType::BRUTE_FORCE, now))
-                        return;
-
-                    const char *service = port_to_service_name(info.dst_port);
-
-                    const Severity sev =
-                        (rate >= config_.brute_force.rate_pps * 3.0)
-                            ? Severity::CRITICAL
-                            : Severity::HIGH;
-
-                    std::ostringstream desc;
-                    desc << std::fixed << std::setprecision(1)
-                         << "Brute force on " << service
-                         << " (port " << info.dst_port << "): "
-                         << rate << " pps "
-                         << "(threshold=" << config_.brute_force.rate_pps << ");"
-                         << " target=" << info.dst_ip;
-
-                    ThreatAlert alert(
-                        AttackType::BRUTE_FORCE,
-                        sev,
-                        info.src_ip,
-                        info.dst_ip,
-                        info.src_port,
-                        info.dst_port,
-                        desc.str());
-
-                    alert.observed_value = rate;
-                    alert.threshold_value = config_.brute_force.rate_pps;
-
-                    fire(std::move(alert), now);
+                    trigger_alert = true;
                 }
+
+                win.count = 0;
+                win.window_start = now;
             }
-            else
+            else if (win.count >= config_.brute_force.rate_pps)
             {
-                ++win.count;
+                current_rate = static_cast<double>(win.count) / std::max(0.001, window_age);
+                trigger_alert = true;
+
+                win.count = 0;
+                win.window_start = now;
+            }
+
+            if (trigger_alert)
+            {
+                if (is_suppressed(info.src_ip, AttackType::BRUTE_FORCE, now))
+                    return;
+
+                const char *service = port_to_service_name(info.dst_port);
+
+                const Severity sev =
+                    (current_rate >= config_.brute_force.rate_pps * 3.0)
+                        ? Severity::CRITICAL
+                        : Severity::HIGH;
+
+                std::ostringstream desc;
+                desc << std::fixed << std::setprecision(1)
+                     << "Brute force on " << service
+                     << " (port " << info.dst_port << "): "
+                     << current_rate << " pps "
+                     << "(threshold=" << config_.brute_force.rate_pps << ");"
+                     << " target=" << info.dst_ip;
+
+                ThreatAlert alert(
+                    AttackType::BRUTE_FORCE,
+                    sev,
+                    info.src_ip,
+                    info.dst_ip,
+                    info.src_port,
+                    info.dst_port,
+                    desc.str());
+
+                alert.observed_value = current_rate;
+                alert.threshold_value = config_.brute_force.rate_pps;
+
+                fire(std::move(alert), now);
             }
         }
 
@@ -538,63 +553,81 @@ namespace nte
         {
             auto &[win_start, byte_count] = exfil_state_[info.src_ip];
 
-            byte_count +=
-                static_cast<uint64_t>(info.l7_payload_length);
+            if (win_start == std::chrono::steady_clock::time_point{})
+            {
+                win_start = now;
+            }
+
+            byte_count += static_cast<uint64_t>(info.l7_payload_length);
 
             const double age =
                 std::chrono::duration<double>(now - win_start).count();
 
-            if (age < 1.0)
-                return;
-
-            const double bps = static_cast<double>(byte_count) / age;
-
-            byte_count = 0;
-            win_start = now;
-
-            // Use the EWMA high_multiplier x bps_floor as a rough baseline since exfil is about absolute volume, not ratio to baseline.
+            // Threshold constants
             constexpr double EXFIL_MEDIUM_BPS = 5'000'000.0; // 5 MB/s
             constexpr double EXFIL_HIGH_BPS = 20'000'000.0;  // 20 MB/s
 
-            Severity sev = Severity::LOW;
+            bool trigger_alert = false;
+            double bps = 0.0;
 
-            if (bps >= EXFIL_HIGH_BPS)
+            if (age >= 1.0)
             {
-                sev = Severity::HIGH;
+                bps = static_cast<double>(byte_count) / age;
+                if (bps >= EXFIL_MEDIUM_BPS)
+                {
+                    trigger_alert = true;
+                }
+
+                byte_count = 0;
+                win_start = now;
             }
-            else if (bps >= EXFIL_MEDIUM_BPS)
+            else if (byte_count >= EXFIL_MEDIUM_BPS)
             {
-                sev = Severity::MEDIUM;
+                bps = static_cast<double>(byte_count) / std::max(0.001, age);
+                trigger_alert = true;
+
+                byte_count = 0;
+                win_start = now;
             }
-            else
+
+            if (trigger_alert)
             {
-                return;
+                Severity sev = Severity::LOW;
+
+                if (bps >= EXFIL_HIGH_BPS)
+                {
+                    sev = Severity::HIGH;
+                }
+                else if (bps >= EXFIL_MEDIUM_BPS)
+                {
+                    sev = Severity::MEDIUM;
+                }
+
+                if (is_suppressed(info.src_ip, AttackType::DATA_EXFILTRATION, now))
+                    return;
+
+                std::ostringstream desc;
+                desc << std::fixed << std::setprecision(2)
+                     << "Outbound data volume: "
+                     << (bps / 1'000'000.0) << " MB/s "
+                     << "(medium threshold=" << (EXFIL_MEDIUM_BPS / 1'000'000.0)
+                     << " MB/s, high=" << (EXFIL_HIGH_BPS / 1'000'000.0) << " MB/s);"
+                     << " dst=" << info.dst_ip << ":" << info.dst_port;
+
+                ThreatAlert alert(
+                    AttackType::DATA_EXFILTRATION,
+                    sev,
+                    info.src_ip,
+                    info.dst_ip,
+                    info.src_port,
+                    info.dst_port,
+                    desc.str());
+
+                alert.observed_value = bps;
+                alert.threshold_value = EXFIL_MEDIUM_BPS;
+
+                fire(std::move(alert), now);
             }
-
-            if (is_suppressed(info.src_ip, AttackType::DATA_EXFILTRATION, now))
-                return;
-
-            std::ostringstream desc;
-            desc << std::fixed << std::setprecision(2)
-                 << "Outbound data volume: "
-                 << (bps / 1'000'000.0) << " MB/s "
-                 << "(medium threshold=" << (EXFIL_MEDIUM_BPS / 1'000'000.0)
-                 << " MB/s, high=" << (EXFIL_HIGH_BPS / 1'000'000.0) << " MB/s);"
-                 << " dst=" << info.dst_ip << ":" << info.dst_port;
-
-            ThreatAlert alert(
-                AttackType::DATA_EXFILTRATION,
-                sev,
-                info.src_ip,
-                info.dst_ip,
-                info.src_port,
-                info.dst_port,
-                desc.str());
-
-            alert.observed_value = bps;
-            alert.threshold_value = EXFIL_MEDIUM_BPS;
-
-            fire(std::move(alert), now);
         }
 
         // Additional per-IP state maps

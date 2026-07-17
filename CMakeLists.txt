@@ -80,6 +80,9 @@ target_compile_options(packet_analyzer
         -Wsign-conversion
         -Wnull-dereference
         -fstack-protector-strong
+        -Wunused-parameter
+        -Wunused-result
+        -Wunused-function
 )
 
 # Linker
