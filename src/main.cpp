@@ -13,10 +13,10 @@
 #include "EWMAEngine.hpp"
 #include "PortScanDetector.hpp"
 #include "SynFloodDetector.hpp"
-#include "CaptureLayer.hpp"
-#include "FlowTracker.hpp"
-#include "ThreatDetector.hpp"
-#include "DeliveryLayer.hpp"
+#include "Capturelayer.hpp"
+#include "Flowtracker.hpp"
+#include "Threatdetector.hpp"
+#include "Deliverylayer.hpp"
 
 #include <atomic>
 #include <chrono>
@@ -93,7 +93,10 @@ static void signal_handler(int signum)
     }
 
     const char *msg = "\n[SIGNAL] Shutdown initiated...\n";
-    (void)::write(STDERR_FILENO, msg, ::strlen(msg));
+    {
+        ssize_t _wr = ::write(STDERR_FILENO, msg, ::strlen(msg));
+        (void)_wr;
+    }
 
     (void)signum;
 }
