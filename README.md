@@ -349,12 +349,14 @@ network-threat-engine/
 │   ├── EWMAEngine.hpp           # Per-host EWMA baseline tracker
 │   ├── PortScanDetector.hpp     # Port scan detection rule class
 │   ├── SynFloodDetector.hpp     # SYN flood detection rule class
+|   ├── Capturelayer.hpp         # Header of CaptureLayer.cpp
+|   ├── Threatdetector.hpp       # Header of ThreatDetector.cpp
+|   ├── Flowtracker.hpp          # Header of FlowTracker.cpp
+|   ├── Deliverylayer.hpp        # Header of DeliveryLayer.cpp
 │   └── Config.hpp               # Compile-time and runtime configuration constants
 │
 └── docs/                        # Engineering documentation
     ├── architecture.md          # Detailed pipeline architecture with sequence diagrams
-    ├── threat-model.md          # Attack categories, detection logic, and tuning guide
-    └── performance-tuning.md    # Kernel buffer tuning, CPU affinity, NUMA considerations
 ```
 
 ---
