@@ -171,14 +171,6 @@ namespace nte
         return oss.str();
     }
 
-    static std::string format_mac(const uint8_t mac[6])
-    {
-        char buf[18];
-        std::snprintf(buf, sizeof(buf), "%02x:%02x:%02x:%02x:%02x:%02x",
-                      mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-        return std::string(buf);
-    }
-
     // Layer 7 extractors (forward declarations)
     static void extract_dns(const uint8_t *payload, std::size_t len, PacketInfo &info);
     static void extract_http(const uint8_t *payload, std::size_t len, PacketInfo &info);
